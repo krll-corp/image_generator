@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from flask import Flask, request, Response, jsonify, render_template
+from flask import Flask, request, Response, jsonify
 from io import BytesIO
 from PIL import Image
 import numpy as np
@@ -15,8 +15,7 @@ from train_conditional import PixelTransformer, PixelTransformerConfig
 from vq_transformer import VQTransformer, VQTransformerConfig
 from vq_vae import VQVAE
 
-app = Flask(__name__, template_folder="templates")
-
+app = Flask(__name__)
 
 device = "mps" if torch.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"  # don't know why but mps runs slower than cpu on m2 mac
 
@@ -109,13 +108,13 @@ print(f"Default selected model: {selected_model}")
 # ------------------------------------------------------------------------------
 @app.route("/")
 def index():
-    """Serve the HTML page with UI."""
-    return render_template("index.html", available_models=available_models)
+    """Serve the Next.js application."""
+    return app.send_static_file("index.html")
 
 # ------------------------------------------------------------------------------
 # MODEL SELECTION
 # ------------------------------------------------------------------------------
-@app.route("/select_model", methods=["POST"])
+@app.route("/api/select_model", methods=["POST"])
 def select_model():
     """Updates the selected model."""
     global selected_model
@@ -131,7 +130,7 @@ def select_model():
 # ------------------------------------------------------------------------------
 # GENERATE DIGIT (Conv-based full 28x28 generation, no streaming)
 # ------------------------------------------------------------------------------
-@app.route("/generate_conv_digit", methods=["GET"])
+@app.route("/api/generate_conv_digit", methods=["GET"])
 def generate_conv_digit():
     """Handles full 28x28 generation for ConvGenerator (non-streamed)."""
     try:
@@ -171,7 +170,7 @@ def generate_conv_digit():
 # ------------------------------------------------------------------------------
 # VQ MODEL GENERATION (token-based then decode with VQ-VAE)
 # ------------------------------------------------------------------------------
-@app.route("/generate_vq_digit", methods=["GET"])
+@app.route("/api/generate_vq_digit", methods=["GET"])
 def generate_vq_digit():
     """Generate image using VQ-Transformer and VQ-VAE."""
     try:
@@ -207,7 +206,7 @@ def generate_vq_digit():
 # ------------------------------------------------------------------------------
 # VQ-VAE DIRECT RECONSTRUCTION (no autoregressive generation)
 # ------------------------------------------------------------------------------
-@app.route("/generate_vq_vae_digit", methods=["GET"])
+@app.route("/api/generate_vq_vae_digit", methods=["GET"])
 def generate_vq_vae_digit():
     """Generate image directly using VQ-VAE (no transformer)."""
     try:
@@ -257,7 +256,7 @@ def generate_vq_vae_digit():
 # ------------------------------------------------------------------------------
 # STREAM DIGIT (Pixel-by-pixel generation or token-by-token for VQ)
 # ------------------------------------------------------------------------------
-@app.route("/stream_digit", methods=["GET"])
+@app.route("/api/stream_digit", methods=["GET"])
 def stream_digit():
     """Streams generation for pixel models or VQ model."""
     try:
