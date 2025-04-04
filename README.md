@@ -47,7 +47,7 @@ python3 train_model_youd_like_to_use
 ```bash
 python app.py
 # or
-python3 a`app.py
+python3 app.py
 ```
 
 3. Open your browser and navigate to `http://127.0.0.1:5000/`
