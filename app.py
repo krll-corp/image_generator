@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from flask import Flask, request, Response, jsonify, send_from_directory
+from flask import Flask, request, Response, jsonify, send_from_directory, render_template
 from io import BytesIO
 from PIL import Image
 import numpy as np
@@ -109,7 +109,7 @@ print(f"Default selected model: {selected_model}")
 @app.route("/")
 def index():
     """Serve the HTML page with UI."""
-    return send_from_directory("static", "index.html")
+    return render_template("index.html", selected_model=selected_model, available_models=available_models)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
