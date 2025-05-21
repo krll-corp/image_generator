@@ -8,8 +8,8 @@ import os
 
 def train_vq_vae():
     """Train and save the VQ-VAE model."""
-    # Use MPS if available, otherwise CPU
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    # Use CPU only
+    device = "cpu"
     print(f"Using device: {device}")
     
     # Setup data

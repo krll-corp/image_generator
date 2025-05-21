@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "build": "pip install flask pillow numpy lion_pytorch transformers torch torchvision torchaudio",
+    "launch": "python app.py",
+    "test": "python train_conditional.py && python train_conv.py && python train_moe_conditional.py && python train_vq_transformer.py && python train_vq_vae.py && python app.py"
+  }
+}

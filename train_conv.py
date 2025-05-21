@@ -10,6 +10,7 @@ class ConvConfig(PretrainedConfig):
     def __init__(self, latent_dim=100, **kwargs):
         super().__init__(**kwargs)
         self.latent_dim = latent_dim
+        self.device = "cpu"
 
 class ConvGeneratorModel(PreTrainedModel):
     config_class = ConvConfig
@@ -51,7 +52,7 @@ class ConvGeneratorModel(PreTrainedModel):
         return out
 
 def main():
-    device = torch.device("mps" if torch.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
     print(f"Using device: {device}")
 
     dataset = ConditionalMNISTDataset("train")

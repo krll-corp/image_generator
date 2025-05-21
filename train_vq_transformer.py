@@ -20,7 +20,7 @@ def train_vq_transformer():
         train_vq_vae()
     
     # Set device
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = "cpu"
     print(f"Using device: {device}")
     
     # Create dataset with VQ tokens

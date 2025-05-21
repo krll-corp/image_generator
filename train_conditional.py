@@ -27,7 +27,7 @@ class PixelTransformerConfig:
     batch_size: int = 64
     epochs: int = 10
     warmup_steps: int = 500
-    device: str = field(default_factory=lambda: "mps")  # Default to CPU, set device explicitly later
+    device: str = field(default="cpu")  # Default to CPU, set device explicitly later
 
     @classmethod
     def from_pretrained(cls, path: str):
@@ -51,8 +51,8 @@ class SelfAttention(nn.Module):
         super().__init__()
         self.d_model = config.d_model
         self.n_heads = config.n_heads
-        self.head_dim = config.d_model // config.n_heads
-        assert config.d_model % config.n_heads == 0, "d_model must be divisible by n_heads"
+        self.head_dim = config.d_model // self.n_heads
+        assert config.d_model % self.n_heads == 0, "d_model must be divisible by n_heads"
 
         self.qkv = nn.Linear(config.d_model, 3 * config.d_model)
         self.o_proj = nn.Linear(config.d_model, config.d_model)
@@ -197,6 +197,7 @@ def train_pixel_transformer(config: PixelTransformerConfig):
     train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
 
+    config.device = "cpu"
     model = PixelTransformer(config).to(config.device)
     #optimizer = optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.01)
     optimizer = lion_pytorch.Lion(model.parameters(), lr=config.lr, weight_decay=0.01)

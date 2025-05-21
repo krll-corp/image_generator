@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from flask import Flask, request, Response, jsonify, render_template
+from flask import Flask, request, Response, jsonify, send_from_directory
 from io import BytesIO
 from PIL import Image
 import numpy as np
@@ -15,10 +15,9 @@ from train_conditional import PixelTransformer, PixelTransformerConfig
 from vq_transformer import VQTransformer, VQTransformerConfig
 from vq_vae import VQVAE
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, static_folder="static")
 
-
-device = "mps" if torch.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"  # don't know why but mps runs slower than cpu on m2 mac
+device = "cpu"
 
 # ------------------------------------------------------------------------------
 # Model Status Tracking
@@ -110,7 +109,11 @@ print(f"Default selected model: {selected_model}")
 @app.route("/")
 def index():
     """Serve the HTML page with UI."""
-    return render_template("index.html", available_models=available_models)
+    return send_from_directory("static", "index.html")
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 # ------------------------------------------------------------------------------
 # MODEL SELECTION

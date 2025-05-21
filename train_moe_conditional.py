@@ -31,7 +31,7 @@ class MoEPixelTransformerConfig:
     batch_size: int = 64
     epochs: int = 10
     warmup_steps: int = 500
-    device: str = field(default="mps" if torch.backends.mps.is_available() else "cpu")
+    device: str = field(default="cpu")  # Default to CPU, set device explicitly later
 
     @classmethod
     def from_pretrained(cls, path: str):
@@ -266,6 +266,7 @@ def train_moe_pixel_transformer(config: MoEPixelTransformerConfig):
     train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
 
+    config.device = "cpu"
     model = MoEPixelTransformer(config).to(config.device)
     #print(f"Model params: ")
     #optimizer = optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.01)
