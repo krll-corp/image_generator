@@ -19,7 +19,7 @@ class VQTransformerConfig:
     epochs: int = 10
     warmup_steps: int = 500
     label_offset: int = 512  # Labels are tokens 512-521 (for digits 0-9)
-    device: str = field(default="mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
+    device: str = field(default="mps" if torch.backends.mps.is_available() else "cpu")
     
     @classmethod
     def from_pretrained(cls, path: str):

@@ -64,6 +64,7 @@ class VQVAE(nn.Module):
             nn.Conv2d(32, embedding_dim, 1, stride=1)  # 7x7 -> 7x7xembedding_dim
         )
         
+        # Vector Quantizer
         self.vq = VectorQuantizer(num_embeddings, embedding_dim)
         
         # Decoder for MNIST (7x7 -> 28x28)
@@ -94,6 +95,7 @@ class VQVAE(nn.Module):
         quantized = torch.matmul(one_hot.permute(0, 2, 3, 1), self.vq.embedding.weight)
         quantized = quantized.permute(0, 3, 1, 2)
         
+        # Decode
         reconstructed = self.decoder(quantized)
         return reconstructed
         
@@ -137,14 +139,18 @@ class VQVAE(nn.Module):
     
     @staticmethod
     def train_and_save(output_path="vq_vae_model.pt", device='cpu', batch_size=128, epochs=10):
+        # Setup data
         transform = transforms.Compose([transforms.ToTensor()])
         train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
+        
+        # Create model
         model = VQVAE().to(device)
-
+        
+        # Train
         model.train_model(train_loader, epochs=epochs, device=device)
         
+        # Save model
         torch.save(model.state_dict(), output_path)
         print(f"Model saved to {output_path}")
         

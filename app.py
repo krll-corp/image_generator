@@ -17,8 +17,8 @@ from vq_vae import VQVAE
 
 app = Flask(__name__, template_folder="templates")
 
-
-device = "mps" if torch.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"  # don't know why but mps runs slower than cpu on m2 mac
+# Detect device — adjust if you want to force 'mps' or 'cuda'
+device = 'cpu'  # don't know why but mps runs slower than cpu
 
 # ------------------------------------------------------------------------------
 # Model Status Tracking
@@ -28,14 +28,13 @@ available_models = {
     "moe": False,       # MoEPixelTransformer (mixture of experts)
     "conv": False,      # ConvGenerator (direct generation)
     "vq": False,        # VQTransformer (autoregressive by token)
-    "vq-vae": False     # VQ-VAE only (encode/decode)
+    "vq-vae": False,    # VQ-VAE only (encode/decode)
+    "diffusion": False  # Diffusion model (DDPM)
 }
 
 # ------------------------------------------------------------------------------
 # Load models
 # ------------------------------------------------------------------------------
-
-
 # 1. Load ConvGenerator
 try:
     conv_config = ConvConfig.from_pretrained("my_conv")
@@ -93,6 +92,22 @@ try:
 except Exception as e:
     print(f"✗ Error loading VQ models: {str(e)}")
 
+# 5. Load Diffusion pipeline if available
+diffusion_pipe = None
+try:
+    from diffusers import DDPMPipeline
+    diffusion_model_dir = "my_diffusion_model"
+    if os.path.exists(diffusion_model_dir):
+        diffusion_pipe = DDPMPipeline.from_pretrained(
+            diffusion_model_dir, torch_dtype=torch.float32
+        ).to(device)
+        available_models["diffusion"] = True
+        print("✓ Diffusion pipeline loaded successfully")
+    else:
+        print(f"✗ Diffusion model directory '{diffusion_model_dir}' not found, skipping diffusion.")
+except Exception as e:
+    diffusion_pipe = None
+    print(f"✗ Error loading Diffusion pipeline: {str(e)}")
 # Select default model (use the first available one)
 for model_name, is_available in available_models.items():
     if is_available:
@@ -254,6 +269,52 @@ def generate_vq_vae_digit():
         print(f"Error in VQ-VAE reconstruction: {str(e)}")
         return Response(str(e), status=500)
 
+
+# ------------------------------------------------------------------------------
+# DIFFUSION GENERATION (using DDPM pipeline)
+# ------------------------------------------------------------------------------
+@app.route("/generate_diffusion_digit", methods=["GET"])
+def generate_diffusion_digit():
+    """Generate image using diffusion model (DDPM)."""
+    if diffusion_pipe is None:
+        return Response("Diffusion model not loaded", status=500)
+    try:
+        digit = int(request.args.get("digit", 0))
+        steps = int(request.args.get("steps", 50))
+        print(f"Generating diffusion image for digit {digit} with {steps} steps...")
+        num_steps = steps
+        scheduler = diffusion_pipe.scheduler
+        scheduler.set_timesteps(num_steps)
+
+        img = torch.randn(
+            (
+                1,
+                diffusion_pipe.unet.config.in_channels,
+                diffusion_pipe.unet.config.sample_size,
+                diffusion_pipe.unet.config.sample_size,
+            ),
+            device=device,
+            dtype=torch.float32,
+        )
+        labels = torch.tensor([digit], device=device)
+
+        for t in scheduler.timesteps:
+            with torch.no_grad():
+                model_output = diffusion_pipe.unet(img, t, class_labels=labels).sample
+            img = scheduler.step(model_output, t, img).prev_sample
+
+        img = (img / 2 + 0.5).clamp(0, 1)
+        array = img.cpu().permute(0, 2, 3, 1).numpy()[0]
+        array = (array * 255).astype(np.uint8)
+        image = Image.fromarray(array.squeeze(), mode="L").resize((28, 28))
+        buf = BytesIO()
+        image.save(buf, format="PNG")
+        buf.seek(0)
+        return Response(buf.getvalue(), mimetype="image/png")
+    except Exception as e:
+        print(f"Error generating diffusion image: {str(e)}")
+        return Response(str(e), status=500)
+
 # ------------------------------------------------------------------------------
 # STREAM DIGIT (Pixel-by-pixel generation or token-by-token for VQ)
 # ------------------------------------------------------------------------------
@@ -292,28 +353,27 @@ def stream_digit():
                             time.sleep(0.005)
                             
                     elif model_name == "vq" and vq_transformer_model and vq_model:
-                        # VQ-Transformer (token by token, then decode)
+                        # VQ-Transformer (token by token, with streaming decode)
                         generator = vq_transformer_model.generate_token_stream(digit, device)
                         tokens = []
-                        
-                        # Stream token generation progress
+
+                        # Stream token generation progress and partial image patches
                         for i, token in enumerate(generator):
                             tokens.append(token)
-                            progress = int((i+1) * 100 / 49)  # 49 tokens total
+                            progress = int((i + 1) * 100 / 49)
                             yield f"data: token:{i+1}:{progress}\n\n"
                             time.sleep(0.01)
-                        
-                        # Then decode tokens to image
-                        if len(tokens) == 49:  # Make sure we have all tokens
-                            token_tensor = torch.tensor(tokens, dtype=torch.long, device=device).reshape(1, 7, 7)
+
+                            # Partial decode: pad remaining tokens with zero index
+                            pad_tokens = tokens + [0] * (49 - len(tokens))
+                            token_tensor = torch.tensor(pad_tokens, dtype=torch.long, device=device).reshape(1, 7, 7)
                             decoded_img = vq_model.decode(token_tensor)
                             img_array = (decoded_img.cpu().squeeze().numpy() * 255).astype(np.uint8)
-                            
-                            # Stream the final image pixels
-                            flattened_pixels = img_array.flatten()
-                            for pixel in flattened_pixels:
-                                yield f"data: {int(pixel)}\n\n"
-                                time.sleep(0.001)
+
+                            # Stream full frame as CSV
+                            flat_pixels = img_array.flatten().tolist()
+                            yield f"data: frame:{','.join(str(int(p)) for p in flat_pixels)}\n\n"
+                            time.sleep(0.001)
                     else:
                         yield "data: Error: Invalid model selected or model not available.\n\n"
 
