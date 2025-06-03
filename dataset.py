@@ -12,6 +12,7 @@ class ConditionalMNISTDataset(Dataset):
         super().__init__()
         self.label_offset = label_offset
         
+        # Load MNIST from torchvision
         transform = transforms.ToTensor()
         self.data = datasets.MNIST(root="./data", train=(split=="train"), 
                                  download=True, transform=transform)

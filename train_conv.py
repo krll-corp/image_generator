@@ -5,12 +5,18 @@ from torch.utils.data import DataLoader
 from transformers import PreTrainedModel, PretrainedConfig
 from dataset import ConditionalMNISTDataset
 
+############################
+#      Config Class        #
+############################
 class ConvConfig(PretrainedConfig):
     model_type = "conv_generator"
     def __init__(self, latent_dim=100, **kwargs):
         super().__init__(**kwargs)
         self.latent_dim = latent_dim
 
+############################
+#      Model Class         #
+############################
 class ConvGeneratorModel(PreTrainedModel):
     config_class = ConvConfig
     def __init__(self, config):
@@ -51,11 +57,16 @@ class ConvGeneratorModel(PreTrainedModel):
         return out
 
 def main():
-    device = torch.device("mps" if torch.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
+    # Ensure MPS is available
+    if not torch.backends.mps.is_available():
+        print("MPS not available. Falling back to CPU.")
+        device = "cpu"
+    else:
+        device = "mps"
     print(f"Using device: {device}")
 
     dataset = ConditionalMNISTDataset("train")
-    loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=0)
+    loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=0)  # Reduced workers for MPS
 
     config = ConvConfig(latent_dim=100)
     model = ConvGeneratorModel(config).to(device)
@@ -67,6 +78,7 @@ def main():
             model.train()
             total_loss = 0
             for step, (x, y) in enumerate(loader, 1):
+                # Move both inputs to device
                 x = x.to(device)
                 y = y.to(device)
                 
@@ -76,7 +88,7 @@ def main():
                 optimizer.zero_grad()
                 generated_images = model(labels)                      # (bsz, 1, 28, 28)
 
-                # Mean Squared Error loss is typical for image generation
+                # Use Mean Squared Error loss
                 loss = F.mse_loss(generated_images, real_images)
                 loss.backward()
                 optimizer.step()
