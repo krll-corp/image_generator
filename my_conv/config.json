@@ -1,0 +1,9 @@
+{
+  "architectures": [
+    "ConvGeneratorModel"
+  ],
+  "latent_dim": 100,
+  "model_type": "conv_generator",
+  "torch_dtype": "float32",
+  "transformers_version": "4.48.1"
+}
