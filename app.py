@@ -387,8 +387,15 @@ def stream_digit():
         print(f"Error in stream_digit: {str(e)}")
         return Response(str(e), status=500)
 
+handler = app
+
 # ------------------------------------------------------------------------------
 # RUN THE APP
 # ------------------------------------------------------------------------------
-if __name__ == "__main__":
-    app.run(debug=True, port=443)
+"""if __name__ == "__main__":
+    app.run(debug=True, port=443)"""
+
+if __name__ == "__main__" and not os.environ.get("VERCEL"):
+    # Use whatever port the local env provides, default 8000
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=True)
