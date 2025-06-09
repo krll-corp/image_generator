@@ -1,1 +1,9 @@
-torch transformers diffusers flask pillow torchvision tdqm lion_pytorch "numpy==2.1.2"
+torch
+transformers
+diffusers
+flask
+pillow
+torchvision
+tdqm
+lion_pytorch
+"numpy==2.1.2"
