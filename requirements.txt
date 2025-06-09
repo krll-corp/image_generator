@@ -6,4 +6,4 @@ pillow
 torchvision
 tdqm
 lion_pytorch
-"numpy==2.1.2"
+numpy==2.1.2
