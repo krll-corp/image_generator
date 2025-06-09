@@ -76,7 +76,7 @@ try:
     # Load VQ-VAE
     if os.path.exists("vq_vae_model.pt"):
         vq_model = VQVAE()
-        vq_model.load_state_dict(torch.load("vq_vae_model.pt", map_location=device))
+        vq_model.load_state_dict(torch.load("vq_vae_model.pt", map_location=device), weights_only=False)
         vq_model.to(device)
         vq_model.eval()
         available_models["vq-vae"] = True
