@@ -1,1 +1,1 @@
-
+torch transformers diffusers flask pillow torchvision numpy==2.1.2
