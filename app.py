@@ -14,11 +14,25 @@ from train_moe_conditional import MoEPixelTransformer, MoEPixelTransformerConfig
 from train_conditional import PixelTransformer, PixelTransformerConfig
 from vq_transformer import VQTransformer, VQTransformerConfig
 from vq_vae import VQVAE
+from config import config
 
 app = Flask(__name__, template_folder="templates")
 
-# Detect device — adjust if you want to force 'mps' or 'cuda'
-device = 'cpu'  # don't know why but mps runs slower than cpu
+# Load configuration
+env = os.environ.get('FLASK_ENV', 'development')
+app.config.from_object(config.get(env, config['default']))
+
+# Detect device — use config or environment variable
+device = app.config.get('DEVICE', 'cpu')
+if device == 'auto':
+    if torch.cuda.is_available():
+        device = 'cuda'
+    elif torch.backends.mps.is_available():
+        device = 'mps'  
+    else:
+        device = 'cpu'
+        
+print(f"Using device: {device}")
 
 # ------------------------------------------------------------------------------
 # Model Status Tracking
@@ -35,10 +49,12 @@ available_models = {
 # ------------------------------------------------------------------------------
 # Load models
 # ------------------------------------------------------------------------------
+model_path = app.config.get('MODEL_PATH', '.')
+
 # 1. Load ConvGenerator
 try:
-    conv_config = ConvConfig.from_pretrained("my_conv")
-    conv_model = ConvGeneratorModel.from_pretrained("my_conv", config=conv_config).to(device)
+    conv_config = ConvConfig.from_pretrained(os.path.join(model_path, "my_conv"))
+    conv_model = ConvGeneratorModel.from_pretrained(os.path.join(model_path, "my_conv"), config=conv_config).to(device)
     conv_model.eval()
     available_models["conv"] = True
     print("✓ ConvGenerator model loaded successfully")
@@ -48,8 +64,8 @@ except Exception as e:
 
 # 2. Load MoEPixelTransformer
 try:
-    moe_config = MoEPixelTransformerConfig.from_pretrained("my_moe_model")
-    moe_model = MoEPixelTransformer.from_pretrained("my_moe_model", config=moe_config).to(device)
+    moe_config = MoEPixelTransformerConfig.from_pretrained(os.path.join(model_path, "my_moe_model"))
+    moe_model = MoEPixelTransformer.from_pretrained(os.path.join(model_path, "my_moe_model"), config=moe_config).to(device)
     moe_model.eval()
     available_models["moe"] = True
     print("✓ MoEPixelTransformer model loaded successfully")
@@ -59,8 +75,8 @@ except Exception as e:
 
 # 3. Load PixelTransformer
 try:
-    pixel_config = PixelTransformerConfig.from_pretrained("my_model")
-    pixel_model = PixelTransformer.from_pretrained("my_model", config=pixel_config).to(device)
+    pixel_config = PixelTransformerConfig.from_pretrained(os.path.join(model_path, "my_model"))
+    pixel_model = PixelTransformer.from_pretrained(os.path.join(model_path, "my_model"), config=pixel_config).to(device)
     pixel_model.eval()
     available_models["pixel"] = True
     print("✓ PixelTransformer model loaded successfully")
@@ -74,18 +90,20 @@ vq_transformer_model = None
 
 try:
     # Load VQ-VAE
-    if os.path.exists("vq_vae_model.pt"):
+    vq_model_file = os.path.join(model_path, "vq_vae_model.pt")
+    if os.path.exists(vq_model_file):
         vq_model = VQVAE()
-        vq_model.load_state_dict(torch.load("vq_vae_model.pt", map_location=device))
+        vq_model.load_state_dict(torch.load(vq_model_file, map_location=device))
         vq_model.to(device)
         vq_model.eval()
         available_models["vq-vae"] = True
         print("✓ VQ-VAE model loaded successfully")
         
         # Load VQ-Transformer
-        if os.path.exists("vq_transformer_model/model.pt"):
-            vq_trans_config = VQTransformerConfig.from_pretrained("vq_transformer_model")
-            vq_transformer_model = VQTransformer.from_pretrained("vq_transformer_model", config=vq_trans_config).to(device)
+        vq_trans_dir = os.path.join(model_path, "vq_transformer_model")
+        if os.path.exists(os.path.join(vq_trans_dir, "model.pt")):
+            vq_trans_config = VQTransformerConfig.from_pretrained(vq_trans_dir)
+            vq_transformer_model = VQTransformer.from_pretrained(vq_trans_dir, config=vq_trans_config).to(device)
             vq_transformer_model.eval()
             available_models["vq"] = True
             print("✓ VQ-Transformer model loaded successfully")
@@ -96,7 +114,7 @@ except Exception as e:
 diffusion_pipe = None
 try:
     from diffusers import DDPMPipeline
-    diffusion_model_dir = "my_diffusion_model"
+    diffusion_model_dir = os.path.join(model_path, "my_diffusion_model")
     if os.path.exists(diffusion_model_dir):
         diffusion_pipe = DDPMPipeline.from_pretrained(
             diffusion_model_dir, torch_dtype=torch.float32
@@ -388,7 +406,22 @@ def stream_digit():
         return Response(str(e), status=500)
 
 # ------------------------------------------------------------------------------
+# HEALTH CHECK
+# ------------------------------------------------------------------------------
+@app.route("/health")
+def health_check():
+    """Health check endpoint for deployment platforms"""
+    return {
+        "status": "healthy",
+        "available_models": [name for name, available in available_models.items() if available],
+        "device": device
+    }
+
+# ------------------------------------------------------------------------------
 # RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    host = app.config.get('HOST', '0.0.0.0')
+    port = app.config.get('PORT', 5000)
+    debug = app.config.get('DEBUG', False)
+    app.run(host=host, port=port, debug=debug)

@@ -1,0 +1,19 @@
+[build]
+  command = "./download-models.sh && pip install -r requirements.txt"
+
+[env]
+  PYTHON_VERSION = "3.11"
+  FLASK_ENV = "production"
+  PORT = "5000"
+  DEVICE = "cpu"
+
+[[services]]
+  type = "web"
+  httpPort = 5000
+  
+  [services.env]
+    PORT = "5000"
+    DEVICE = "cpu"
+    MODEL_PATH = "/opt/render/project/src"
+    
+  [services.healthCheckPath] = "/health"

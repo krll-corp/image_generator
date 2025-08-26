@@ -1,0 +1,37 @@
+.git
+.gitignore
+.DS_Store
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Model directories - these should be mounted or downloaded separately
+# my_conv/
+# my_model/
+# my_moe_model/
+# vq_transformer_model/
+# my_diffusion_model/
+# *.pt
+
+# Data directories
+data/
+*.png
+*.jpg
+*.jpeg

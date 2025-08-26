@@ -1,0 +1,13 @@
+# .railway directory for Railway deployment
+[build]
+cmd = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python app.py"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+[env]
+PORT = { type = "static", value = "5000" }
+FLASK_ENV = { type = "static", value = "production" }
+DEVICE = { type = "static", value = "cpu" }

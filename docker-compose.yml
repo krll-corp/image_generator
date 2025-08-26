@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  image-generator:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount model directories from host
+      - ./models:/app/models
+    environment:
+      - FLASK_ENV=production
+      - MODEL_PATH=/app/models
+    restart: unless-stopped

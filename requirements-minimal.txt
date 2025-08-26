@@ -1,0 +1,9 @@
+# Alternative requirements for platforms with PyTorch installation issues
+flask>=2.3.0
+pillow>=9.0.0
+numpy>=1.21.0
+gunicorn>=20.1.0
+gradio>=3.50.0
+
+# Note: Install PyTorch separately with:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
