@@ -3,3 +3,4 @@ transformers
 flask
 pillow
 torchvision
+lion_pytorch
