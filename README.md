@@ -70,6 +70,44 @@ python3 a`app.py
 
 The application checks for available models on startup. If a model is missing, the related functionality will be disabled in the UI. You'll need to train the models or obtain pre-trained weights to use all features.
 
+## Docker Deployment
+
+A Docker image is automatically built and published to GitHub Container Registry (GHCR) on each push to the main branch.
+
+### Using the Pre-built Docker Image
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/krll-corp/image_generator:latest
+
+# Run the container
+docker run -p 5000:5000 ghcr.io/krll-corp/image_generator:latest
+```
+
+### Building Locally
+
+```bash
+# Build the Docker image
+docker build -t image-generator .
+
+# Run the container
+docker run -p 5000:5000 image-generator
+```
+
+The application will be available at `http://localhost:5000`
+
+### Docker Compose (Optional)
+
+```yaml
+version: '3.8'
+services:
+  image-generator:
+    image: ghcr.io/krll-corp/image_generator:latest
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+```
+
 ## License
 
 [MIT License](https://opensource.org/licenses/MIT)
