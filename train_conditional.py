@@ -34,7 +34,7 @@ class PixelTransformerConfig:
         config_path = os.path.join(path, "config.pt")
         if not os.path.exists(config_path):
             raise ValueError(f"No config found at {config_path}")
-        config_dict = torch.load(config_path)
+        config_dict = torch.load(config_path, weights_only=False)
         return cls(**config_dict)
 
     def save_pretrained(self, path: str):
@@ -170,7 +170,7 @@ class PixelTransformer(nn.Module):
         
         # Create model and load state dict
         model = cls(config)
-        state_dict = torch.load(os.path.join(path, "model.pt"), map_location='cpu')
+        state_dict = torch.load(os.path.join(path, "model.pt"), map_location='cpu', weights_only=False)
         model.load_state_dict(state_dict)
         
         # Move model to device after loading
