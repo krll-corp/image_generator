@@ -29,8 +29,23 @@ git clone https://github.com/krll-corp/image_generator.git
 cd image_generator
 
 # Install dependencies
-pip install torch torchvision flask pillow numpy
+pip install -r requirements.txt
 ```
+
+## Quick Start with Docker
+
+The fastest way to run the application is using Docker:
+
+```bash
+# Build and run with Docker
+docker build -t mnist-generator .
+docker run -p 7860:7860 mnist-generator
+
+# Or use docker-compose
+docker-compose up
+```
+
+Then open http://localhost:7860 in your browser.
 
 ## Usage
 
