@@ -1,1 +1,26 @@
 .DS_Store
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Model files
+*.pt
+*.pth
+*.safetensors
+my_*/
+*_model/
+
+# Data files
+data/
+
+# Environment files
+.env
+.venv
+venv/
+
+# IDE files
+.vscode/
+.idea/

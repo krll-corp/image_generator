@@ -391,4 +391,9 @@ def stream_digit():
 # RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use environment variables for host and port to support different deployment environments
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "7860"))
+    debug = os.getenv("FLASK_ENV", "production") == "development"
+    
+    app.run(host=host, port=port, debug=debug)

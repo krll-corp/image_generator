@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mnist-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7860:7860"
+    environment:
+      - FLASK_ENV=development
+      - PORT=7860
+      - HOST=0.0.0.0
+    volumes:
+      # Mount local models directory if you have trained models
+      - ./models:/app/models:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

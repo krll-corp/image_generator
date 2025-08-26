@@ -70,6 +70,41 @@ python3 a`app.py
 
 The application checks for available models on startup. If a model is missing, the related functionality will be disabled in the UI. You'll need to train the models or obtain pre-trained weights to use all features.
 
+## Docker Deployment
+
+This application can be containerized and deployed using Docker. A complete CI/CD pipeline is included for building and pushing Docker images.
+
+### Building the Docker Image
+
+```bash
+# Build the image locally
+docker build -t mnist-generator .
+
+# Run the container
+docker run -p 7860:7860 mnist-generator
+```
+
+### HuggingFace Spaces Deployment
+
+The application is configured to work with HuggingFace Spaces using Docker. The container:
+
+- Uses port 7860 (HuggingFace Spaces default)
+- Binds to 0.0.0.0 for external access
+- Includes all necessary dependencies in `requirements.txt`
+- Has optimized Docker layers for faster builds
+
+### CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/docker.yml`) automatically:
+
+- Builds Docker images on push to main/master branches
+- Pushes images to GitHub Container Registry (ghcr.io)
+- Tags images appropriately (latest, version, branch, SHA)
+- Supports multi-platform builds (linux/amd64, linux/arm64)
+- Uses build caching for faster builds
+
+The built images are available at: `ghcr.io/krll-corp/image_generator:latest`
+
 ## License
 
 [MIT License](https://opensource.org/licenses/MIT)
