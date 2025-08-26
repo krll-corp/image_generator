@@ -5,3 +5,4 @@ pillow
 torchvision
 lion_pytorch
 diffusers
+accelerate
