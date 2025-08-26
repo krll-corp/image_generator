@@ -1,3 +1,14 @@
+---
+title: "MNIST Digit Generator"
+emoji: "🎨"
+colorFrom: "blue"
+colorTo: "green"
+sdk: "python"
+sdk_version: "3.9"
+app_file: app.py
+pinned: false
+---
+
 # MNIST Digit Generator
 
 An interactive web application that generates MNIST-style digits using various deep learning models. The application allows users to visualize digit generation in real-time through a web interface.
