@@ -17,6 +17,11 @@ from vq_vae import VQVAE
 
 app = Flask(__name__, template_folder="templates")
 
+#join the path where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.path.join(script_dir, '')
+os.system("git lfs pull")
+
 # Detect device — adjust if you want to force 'mps' or 'cuda'
 device = 'cpu'  # don't know why but mps runs slower than cpu
 
