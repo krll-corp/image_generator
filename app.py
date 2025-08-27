@@ -396,4 +396,4 @@ def stream_digit():
 # RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=7860)
+    app.run(debug=True, port=7860, host="0.0.0.0")
