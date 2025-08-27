@@ -38,7 +38,7 @@ def train_vq_transformer():
         max_position_embeddings=50,  # 1 label + 49 tokens
         label_offset=512,  # Labels are tokens 512-521
         batch_size=32,
-        epochs=5,
+        epochs=10, #5
         lr=1e-3,
         warmup_steps=500,
         device=device
