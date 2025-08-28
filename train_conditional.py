@@ -164,17 +164,34 @@ class PixelTransformer(nn.Module):
             yield next_token.cpu().item()
 
     @classmethod
-    def from_pretrained(cls, path: str, config: Optional[PixelTransformerConfig] = None):
+    def from_pretrained(
+        cls,
+        path: str,
+        config: Optional[PixelTransformerConfig] = None,
+        device: str = "cpu",
+    ):
+        """Load a pretrained model on a given device (default CPU).
+
+        The original training configuration stores the device it was trained on
+        (often ``mps`` when trained on a Mac).  Loading such checkpoints on a
+        machine without MPS support would previously fail.  By always loading
+        the state dictionary on CPU and explicitly moving the model to the
+        requested device we make the checkpoint portable across devices.
+        """
         if config is None:
             config = PixelTransformerConfig.from_pretrained(path)
-        
-        # Create model and load state dict
+
+        # Ensure the config reflects the actual runtime device
+        config.device = device
+
+        # Create model and load state dict on CPU
         model = cls(config)
-        state_dict = torch.load(os.path.join(path, "model.pt"), map_location='cpu', weights_only=False)
+        state_dict = torch.load(
+            os.path.join(path, "model.pt"), map_location="cpu", weights_only=False
+        )
         model.load_state_dict(state_dict)
-        
-        # Move model to device after loading
-        device = config.device
+
+        # Move model to the desired device
         model = model.to(device)
         return model
 

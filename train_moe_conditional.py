@@ -237,14 +237,29 @@ class MoEPixelTransformer(nn.Module):
             yield next_token
 
     @classmethod
-    def from_pretrained(cls, path: str, config: MoEPixelTransformerConfig = None):
-        # Load a saved model
+    def from_pretrained(
+        cls,
+        path: str,
+        config: MoEPixelTransformerConfig = None,
+        device: str = "cpu",
+    ):
+        """Load a saved model onto the specified device (default CPU).
+
+        Checkpoints saved on macOS may reference the ``mps`` device.  Loading
+        them on environments without MPS support would previously raise
+        ``torch.UntypedStorage`` errors.  We load weights on CPU first and then
+        move the model to the requested device to ensure compatibility."""
         if config is None:
             config = MoEPixelTransformerConfig.from_pretrained(path)
+
+        # Update config to reflect the runtime device
+        config.device = device
+
         model_path = os.path.join(path, "model.pt")
         model = cls(config)
-        model.load_state_dict(torch.load(model_path, map_location=config.device))
-        model.to(config.device)
+        state_dict = torch.load(model_path, map_location="cpu")
+        model.load_state_dict(state_dict)
+        model.to(device)
         return model
 
     def save_pretrained(self, path: str):

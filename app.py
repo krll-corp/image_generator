@@ -17,10 +17,9 @@ from vq_vae import VQVAE
 
 app = Flask(__name__, template_folder="templates")
 
-#join the path where the script is located
+# Join the path where the script is located (unused but kept for reference)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-os.path.join(script_dir, '')
-os.system("git lfs pull")
+os.path.join(script_dir, "")
 
 # Detect device — adjust if you want to force 'mps' or 'cuda'
 device = 'cpu'  # don't know why but mps runs slower than cpu
@@ -54,7 +53,9 @@ except Exception as e:
 # 2. Load MoEPixelTransformer
 try:
     moe_config = MoEPixelTransformerConfig.from_pretrained("my_moe_model")
-    moe_model = MoEPixelTransformer.from_pretrained("my_moe_model", config=moe_config).to(device)
+    moe_model = MoEPixelTransformer.from_pretrained(
+        "my_moe_model", config=moe_config, device=device
+    )
     moe_model.eval()
     available_models["moe"] = True
     print("✓ MoEPixelTransformer model loaded successfully")
@@ -65,7 +66,9 @@ except Exception as e:
 # 3. Load PixelTransformer
 try:
     pixel_config = PixelTransformerConfig.from_pretrained("my_model")
-    pixel_model = PixelTransformer.from_pretrained("my_model", config=pixel_config).to(device)
+    pixel_model = PixelTransformer.from_pretrained(
+        "my_model", config=pixel_config, device=device
+    )
     pixel_model.eval()
     available_models["pixel"] = True
     print("✓ PixelTransformer model loaded successfully")
@@ -90,7 +93,9 @@ try:
         # Load VQ-Transformer
         if os.path.exists("vq_transformer_model/model.pt"):
             vq_trans_config = VQTransformerConfig.from_pretrained("vq_transformer_model")
-            vq_transformer_model = VQTransformer.from_pretrained("vq_transformer_model", config=vq_trans_config).to(device)
+            vq_transformer_model = VQTransformer.from_pretrained(
+                "vq_transformer_model", config=vq_trans_config, device=device
+            )
             vq_transformer_model.eval()
             available_models["vq"] = True
             print("✓ VQ-Transformer model loaded successfully")
@@ -396,4 +401,5 @@ def stream_digit():
 # RUN THE APP
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=7860, host="0.0.0.0")
+    port = int(os.environ.get("PORT", 7860))
+    app.run(debug=False, port=port, host="0.0.0.0")

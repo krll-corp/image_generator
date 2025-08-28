@@ -182,13 +182,28 @@ class VQTransformer(nn.Module):
             yield token_value
     
     @classmethod
-    def from_pretrained(cls, path: str, config=None):
+    def from_pretrained(
+        cls,
+        path: str,
+        config: VQTransformerConfig = None,
+        device: str = "cpu",
+    ):
+        """Load a pretrained VQTransformer on the requested device.
+
+        Checkpoints created on machines with Apple silicon were saved with the
+        ``mps`` device.  When loaded on CPUs this resulted in ``torch`` raising
+        ``Storage device not recognized: mps``.  We load weights on CPU and move
+        the model afterwards to ensure compatibility across platforms."""
         if config is None:
             config = VQTransformerConfig.from_pretrained(path)
+
+        config.device = device
+
         model = cls(config)
         model_path = os.path.join(path, "model.pt")
-        model.load_state_dict(torch.load(model_path, map_location=config.device))
-        model.to(config.device)
+        state_dict = torch.load(model_path, map_location="cpu")
+        model.load_state_dict(state_dict)
+        model.to(device)
         return model
 
     def save_pretrained(self, path: str):
